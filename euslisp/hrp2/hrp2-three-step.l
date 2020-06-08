@@ -2,15 +2,21 @@
 (load "package://eus_qp/optmotiongen/euslisp/bspline-dynamic-configuration-task.l")
 
 
-(defun hrp2-one-step
+(defun hrp2-three-step
     (&key
      ;; time
      (start-time 0.0)
-     (finish-time 1.0)
+     (finish-time 2.0)
      (takeoff0-time 0.3)
-     (landing0-time 0.7)
+     (landing0-time 0.6)
+     (takeoff1-time 0.9)
+     (landing1-time 1.2)
+     (takeoff2-time 1.5)
+     (landing2-time 1.8)
      ;; motion
      (landing0-pos (float-vector 200 0 0))
+     (landing1-pos (float-vector 400 0 0))
+     (landing2-pos (float-vector 600 0 0))
      ;; task-time-divide-num
      (kin-task-time-divide-num 10)
      (eom-task-time-divide-num 50)
@@ -25,9 +31,9 @@
      (optimize-torque? nil)
      (avoid-collision? nil)
      (graph-filename
-      (ros::resolve-ros-path "package://eus_qp/optmotiongen/logs/hrp2-one-step/graph.pdf"))
+      (ros::resolve-ros-path "package://eus_qp/optmotiongen/logs/hrp2-three-step/graph.pdf"))
      (output-filename
-      (ros::resolve-ros-path "package://eus_qp/optmotiongen/logs/hrp2-one-step/tmp"))
+      (ros::resolve-ros-path "package://eus_qp/optmotiongen/logs/hrp2-three-step/tmp"))
      (pre-process-func)
      (visualize-callback-func)
      (visualize-loop? t)
@@ -43,8 +49,14 @@
   (setq *arrow-lleg-landing0* (instance arrow-object :init))
   (send *arrow-lleg-landing0* :newcoords
         (send (send *arrow-lleg* :copy-worldcoords) :translate landing0-pos))
+  (setq *arrow-rleg-landing1* (instance arrow-object :init))
+  (send *arrow-rleg-landing1* :newcoords
+        (send (send *arrow-rleg* :copy-worldcoords) :translate landing1-pos))
+  (setq *arrow-lleg-landing2* (instance arrow-object :init))
+  (send *arrow-lleg-landing2* :newcoords
+        (send (send *arrow-lleg* :copy-worldcoords) :translate landing2-pos))
   (setq *arrow-list*
-        (list *arrow-rleg* *arrow-lleg* *arrow-lleg-landing0*))
+        (list *arrow-rleg* *arrow-lleg* *arrow-lleg-landing0* *arrow-rleg-landing1* *arrow-lleg-landing2*))
   ;; setup robot
   (setup-hrp2jsknts-for-sample-sqp-optimization)
   (setq *robot-env*
@@ -53,8 +65,14 @@
   (send *robot-env* :put :arrow-rleg *arrow-rleg*)
   (send *robot-env* :put :arrow-lleg *arrow-lleg*)
   (send *robot-env* :put :arrow-lleg-landing0 *arrow-lleg-landing0*)
+  (send *robot-env* :put :arrow-rleg-landing1 *arrow-rleg-landing1*)
+  (send *robot-env* :put :arrow-lleg-landing2 *arrow-lleg-landing2*)
   (send *robot-env* :put :takeoff0-time takeoff0-time)
   (send *robot-env* :put :landing0-time landing0-time)
+  (send *robot-env* :put :takeoff1-time takeoff1-time)
+  (send *robot-env* :put :landing1-time landing1-time)
+  (send *robot-env* :put :takeoff2-time takeoff2-time)
+  (send *robot-env* :put :landing2-time landing2-time)
   ;; setup contact constraint
   (send *robot-env* :put :rleg-contact-constraint
         (instance default-contact-constraint
@@ -179,10 +197,23 @@
                                    ))
                             ((< tm (send robot-env :get :landing0-time))
                              (list (send (send robot-env :get :arrow-rleg) :copy-worldcoords)))
-                            (t
+                            ((< tm (send robot-env :get :takeoff1-time))
                              (list (send (send robot-env :get :arrow-rleg) :copy-worldcoords)
                                    (send (send robot-env :get :arrow-lleg-landing0) :copy-worldcoords)
-                                   )))
+                                   ))
+                            ((< tm (send robot-env :get :landing1-time))
+                             (list (send (send robot-env :get :arrow-lleg-landing0) :copy-worldcoords)))
+                            ((< tm (send robot-env :get :takeoff2-time))
+                             (list (send (send robot-env :get :arrow-rleg-landing1) :copy-worldcoords)
+                                   (send (send robot-env :get :arrow-lleg-landing0) :copy-worldcoords)
+                                   ))
+                            ((< tm (send robot-env :get :landing2-time))
+                             (list (send (send robot-env :get :arrow-rleg-landing1) :copy-worldcoords)))
+                            (t
+                             (list (send (send robot-env :get :arrow-rleg-landing1) :copy-worldcoords)
+                                   (send (send robot-env :get :arrow-lleg-landing2) :copy-worldcoords)
+                                   ))
+                            )
                       )
                   :kin-attention-coords-list-func
                   #'(lambda (robot-env tm)
@@ -192,10 +223,23 @@
                                    ))
                             ((< tm (send robot-env :get :landing0-time))
                              (list (send robot-env :robot :get :rleg-contact-coords)))
+                            ((< tm (send robot-env :get :takeoff1-time))
+                             (list (send robot-env :robot :get :rleg-contact-coords)
+                                   (send robot-env :robot :get :lleg-contact-coords)
+                                   ))
+                            ((< tm (send robot-env :get :landing1-time))
+                             (list (send robot-env :robot :get :lleg-contact-coords)))
+                            ((< tm (send robot-env :get :takeoff2-time))
+                             (list (send robot-env :robot :get :rleg-contact-coords)
+                                   (send robot-env :robot :get :lleg-contact-coords)
+                                   ))
+                            ((< tm (send robot-env :get :landing2-time))
+                             (list (send robot-env :robot :get :rleg-contact-coords)))
                             (t
                              (list (send robot-env :robot :get :rleg-contact-coords)
                                    (send robot-env :robot :get :lleg-contact-coords)
-                                   )))
+                                   ))
+                            )
                       )
                   :contact-target-coords-list-func
                   #'(lambda (robot-env tm)
@@ -207,10 +251,29 @@
                              (list (send (send robot-env :get :arrow-rleg) :copy-worldcoords)
                                    nil
                                    ))
-                            (t
+                            ((< tm (send robot-env :get :takeoff1-time))
                              (list (send (send robot-env :get :arrow-rleg) :copy-worldcoords)
                                    (send (send robot-env :get :arrow-lleg-landing0) :copy-worldcoords)
-                                   )))
+                                   ))
+                            ((< tm (send robot-env :get :landing1-time))
+                             (list nil
+                                   (send (send robot-env :get :arrow-lleg-landing0) :copy-worldcoords)
+                                   ))
+                            ((< tm (send robot-env :get :takeoff2-time))
+                             (list (send (send robot-env :get :arrow-rleg-landing1) :copy-worldcoords)
+                                   (send (send robot-env :get :arrow-lleg-landing0) :copy-worldcoords)
+                                   )
+                             )
+                            ((< tm (send robot-env :get :landing2-time))
+                             (list (send (send robot-env :get :arrow-rleg-landing1) :copy-worldcoords)
+                                   nil
+                                   ))
+                            (t
+                             (list (send (send robot-env :get :arrow-rleg-landing1) :copy-worldcoords)
+                                   (send (send robot-env :get :arrow-lleg-landing2) :copy-worldcoords)
+                                   )
+                             )
+                            )
                       )
                   :contact-attention-coords-list-func
                   #'(lambda (robot-env tm)
@@ -222,10 +285,29 @@
                              (list (send robot-env :robot :get :rleg-contact-coords)
                                    nil
                                    ))
+                            ((< tm (send robot-env :get :takeoff1-time))
+                             (list (send robot-env :robot :get :rleg-contact-coords)
+                                   (send robot-env :robot :get :lleg-contact-coords)
+                                   ))
+                            ((< tm (send robot-env :get :landing1-time))
+                             (list nil
+                                   (send robot-env :robot :get :lleg-contact-coords)
+                                   ))
+                            ((< tm (send robot-env :get :takeoff2-time))
+                             (list (send robot-env :robot :get :rleg-contact-coords)
+                                   (send robot-env :robot :get :lleg-contact-coords)
+                                   )
+                             )
+                            ((< tm (send robot-env :get :landing2-time))
+                             (list (send robot-env :robot :get :rleg-contact-coords)
+                                   nil
+                                   ))
                             (t
                              (list (send robot-env :robot :get :rleg-contact-coords)
                                    (send robot-env :robot :get :lleg-contact-coords)
-                                   ))))
+                                   )
+                             )
+                            ))
                   :contact-constraint-list-func
                   #'(lambda (robot-env tm)
                       (list (send robot-env :get :rleg-contact-constraint)
@@ -291,4 +373,4 @@
         :visualize-callback-func visualize-callback-func
         )
   )
-(warn "(hrp2-one-step)~%")
+(warn "(hrp2-three-step)~%")

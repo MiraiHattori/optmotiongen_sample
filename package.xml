@@ -1,0 +1,9 @@
+<package format="2">
+  <name>optmotiongen_sample</name>
+  <version>0.0.0</version>
+  <description>
+  This package is for optmotiongen
+  </description>
+  <maintainer email="m-hattori@jsk.imi.i.u-tokyo.ac.jp">Mirai Hattori</maintainer>
+  <license>BSD</license>
+</package>

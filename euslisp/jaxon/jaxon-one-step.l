@@ -1,5 +1,6 @@
 (load "./sample-sqp-optimization-instant.l")
 (load "package://eus_qp/optmotiongen/euslisp/bspline-dynamic-configuration-task.l")
+(load "package://tennis/euslisp/robot-interface.l")
 
 
 (defun jaxon-run
@@ -10,10 +11,10 @@
      (takeoff0-time 0.3)
      (landing0-time 0.7)
      ;; motion
-     (landing0-pos (float-vector 200 0 0))
+     (landing0-pos (float-vector 400 200 0))
      ;; task-time-divide-num
-     (kin-task-time-divide-num 10)
-     (eom-task-time-divide-num 50)
+     (kin-task-time-divide-num 20)
+     (eom-task-time-divide-num 20)
      (centroid-task-time-divide-num 20)
      (posture-task-time-divide-num 5)
      ;; bspline setting
@@ -36,10 +37,10 @@
   ;; setup arrow
   (setq *arrow-rleg* (instance arrow-object :init))
   (send *arrow-rleg* :newcoords
-        (make-coords :pos (float-vector 0 -105 0) :rpy (list 0 0 0)))
+        (make-coords :pos (float-vector 0 -305 0) :rpy (list -0.5 0 0)))
   (setq *arrow-lleg* (instance arrow-object :init))
   (send *arrow-lleg* :newcoords
-        (make-coords :pos (float-vector 0 105 0) :rpy (list 0 0 0)))
+        (make-coords :pos (float-vector 0 305 0) :rpy (list 0.5 0 0)))
   (setq *arrow-lleg-landing0* (instance arrow-object :init))
   (send *arrow-lleg-landing0* :newcoords
         (send (send *arrow-lleg* :copy-worldcoords) :translate landing0-pos))
@@ -180,8 +181,8 @@
                             ((< tm (send robot-env :get :landing0-time))
                              (list (send (send robot-env :get :arrow-rleg) :copy-worldcoords)))
                             (t
-                             (list (send (send robot-env :get :arrow-rleg) :copy-worldcoords))
-                             (list (send (send robot-env :get :arrow-lleg-landing0) :copy-worldcoords))))
+                             (list (send (send robot-env :get :arrow-rleg) :copy-worldcoords)
+                                   (send (send robot-env :get :arrow-lleg-landing0) :copy-worldcoords))))
                       )
                   :kin-attention-coords-list-func
                   #'(lambda (robot-env tm)
@@ -192,8 +193,8 @@
                             ((< tm (send robot-env :get :landing0-time))
                              (list (send robot-env :robot :get :rleg-contact-coords)))
                             (t
-                             (list (send robot-env :robot :get :rleg-contact-coords))
-                             (list (send robot-env :robot :get :lleg-contact-coords))))
+                             (list (send robot-env :robot :get :rleg-contact-coords)
+                                   (send robot-env :robot :get :lleg-contact-coords))))
                       )
                   :contact-target-coords-list-func
                   #'(lambda (robot-env tm)

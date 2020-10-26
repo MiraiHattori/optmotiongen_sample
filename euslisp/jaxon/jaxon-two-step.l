@@ -206,13 +206,13 @@
                             ((< tm (send robot-env :get :landing0-time))
                              (list (send robot-env :robot :get :rleg-contact-coords)))
                             ((< tm (send robot-env :get :takeoff1-time))
-                             (list (send robot-env :robot :get :rleg-contact-coords))
-                             (list (send robot-env :robot :get :lleg-contact-coords)))
+                             (list (send robot-env :robot :get :rleg-contact-coords)
+                                   (send robot-env :robot :get :lleg-contact-coords)))
                             ((< tm (send robot-env :get :landing1-time))
                              (list (send robot-env :robot :get :lleg-contact-coords)))
                             (t
-                             (list (send robot-env :robot :get :rleg-contact-coords))
-                             (list (send robot-env :robot :get :lleg-contact-coords))))
+                             (list (send robot-env :robot :get :rleg-contact-coords)
+                                   (send robot-env :robot :get :lleg-contact-coords))))
                       )
                   :contact-target-coords-list-func
                   #'(lambda (robot-env tm)

@@ -19,8 +19,28 @@
   )
 
 (defun setup-jaxon_red-for-sample-sqp-optimization
-    (&key (only-kinematics? nil))
+    (&key (only-kinematics? nil)
+          (with-racket? t))
   (setq *robot* (instance jaxon_red-robot :init))
+  (when with-racket?
+     (format t "with racket~%")
+     (progn (require "package://tennis/model/racket-model.l")
+            ;; prepare racket
+            (setq *racket-coords* (make-cascoords :pos #f(0 0 50) :rpy (list 0 0 0)))
+            (setq *racket-model* (instance racket :init :rim 15))
+            (send *racket-model* :orient (deg2rad 90) :x :world)
+            (send *racket-model* :locate #f(0 15 520) :world)
+            (send *racket-coords* :assoc *racket-model*)
+            (setq *sweet-spot* (make-cascoords :pos #f(0 0 520) :rpy (list (deg2rad 180) 0 (deg2rad 90))))
+            (send *racket-coords* :assoc *sweet-spot*)
+            (setq *racket-grip* (make-cascoords :pos #f(0 0 50) :rpy (list (deg2rad 45) (deg2rad -45) 0)))
+            ;; grab grip temporarily
+            (send *racket-grip* :assoc *racket-coords*)
+            (send *racket-grip* :move-to (send (send *robot* :rarm :end-coords) :copy-worldcoords) :world)
+            (send *racket-grip* :dissoc *racket-coords*)
+            (send *racket-coords* :assoc *racket-grip*)
+            (send (send *robot* :rarm :end-coords) :assoc *racket-coords*)
+            ))
   ;; assoc contact coords
   (send *robot* :put :rleg-contact-coords
         (make-cascoords :name :rleg-contact-coords
@@ -32,11 +52,17 @@
                         :parent (car (last (send *robot* :lleg :links)))
                         :coords (send (send *robot* :lleg-end-coords) :copy-worldcoords)
                         ))
-  (send *robot* :put :rarm-contact-coords
-        (make-cascoords :name :rarm-contact-coords
-                        :parent (car (last (send *robot* :rarm :links)))
-                        :coords (send (send *robot* :rarm-end-coords) :copy-worldcoords)
-                        ))
+  (if with-racket?
+      (send *robot* :put :rarm-contact-coords
+            (make-cascoords :name :rarm-contact-coords
+                            :parent (car (last (send *robot* :rarm :links)))
+                            :coords (send *sweet-spot* :copy-worldcoords)
+                            ))
+      (send *robot* :put :rarm-contact-coords
+            (make-cascoords :name :rarm-contact-coords
+                            :parent (car (last (send *robot* :rarm :links)))
+                            :coords (send (send *robot* :rarm-end-coords) :copy-worldcoords)
+                            )))
   (send *robot* :put :larm-contact-coords
         (make-cascoords :name :larm-contact-coords
                         :parent (car (last (send *robot* :larm :links)))
@@ -139,7 +165,7 @@
     (send *irtviewer* :draw-floor 500)
     (send *irtviewer* :floor-color (float-vector 0 0 0))
     )
-  (objects (append (list *robot* *arrow*) *env-list* (if avoid-collision? (list *obst*))))
+  (objects (append (list *robot* *arrow* *racket-grip* *racket-model* *sweet-spot*) *env-list* (if avoid-collision? (list *obst*))))
 
   (setq *instant-config-task*
         (instance instant-configuration-task :init

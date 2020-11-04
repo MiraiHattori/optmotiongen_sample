@@ -6,12 +6,13 @@
     (&key
      ;; time
      (start-time 0.0)
-     (finish-time 1.0)
+     (finish-time 1.5)
      (prepare-time 0.1)
      (takeoff0-time 0.3)
      (landing0-time 0.7)
+     (hitting-time 0.8)
      ;; motion
-     (landing0-pos (float-vector 200 0 0))
+     (landing0-pos (float-vector 300 0 0))
      ;; task-time-divide-num
      (kin-task-time-divide-num 10)
      (eom-task-time-divide-num 50)
@@ -40,10 +41,10 @@
         (make-coords :pos (float-vector 550 -900 1200) :rpy (list -180 -70 0)))
   (setq *arrow-rleg* (instance arrow-object :init))
   (send *arrow-rleg* :newcoords
-        (make-coords :pos (float-vector 0 -105 0) :rpy (list 0 0 0)))
+        (make-coords :pos (float-vector 0 -280 0) :rpy (list (deg2rad -30) 0 0)))
   (setq *arrow-lleg* (instance arrow-object :init))
   (send *arrow-lleg* :newcoords
-        (make-coords :pos (float-vector 0 105 0) :rpy (list 0 0 0)))
+        (make-coords :pos (float-vector 0 280 0) :rpy (list (deg2rad 30) 0 0)))
   (setq *arrow-lleg-landing0* (instance arrow-object :init))
   (send *arrow-lleg-landing0* :newcoords
         (send (send *arrow-lleg* :copy-worldcoords) :translate landing0-pos))
@@ -186,13 +187,16 @@
 
                                    ))
                             ((< tm (send robot-env :get :takeoff0-time))
-                             (list (send (send robot-env :get :arrow-rleg) :copy-worldcoords)
+                             (list (send (send robot-env :get :arrow-target) :copy-worldcoords)
+                                   (send (send robot-env :get :arrow-rleg) :copy-worldcoords)
                                    (send (send robot-env :get :arrow-lleg) :copy-worldcoords)
                                    ))
                             ((< tm (send robot-env :get :landing0-time))
-                             (list (send (send robot-env :get :arrow-rleg) :copy-worldcoords)))
+                             (list (send (send robot-env :get :arrow-target) :copy-worldcoords)
+                                   (send (send robot-env :get :arrow-rleg) :copy-worldcoords)))
                             (t
-                             (list (send (send robot-env :get :arrow-rleg) :copy-worldcoords)
+                             (list (send (send robot-env :get :arrow-target) :copy-worldcoords)
+                                   (send (send robot-env :get :arrow-rleg) :copy-worldcoords)
                                    (send (send robot-env :get :arrow-lleg-landing0) :copy-worldcoords))))
                       )
                   :kin-attention-coords-list-func
@@ -202,13 +206,16 @@
                                    (send robot-env :robot :get :rleg-contact-coords)
                                    (send robot-env :robot :get :lleg-contact-coords)))
                             ((< tm (send robot-env :get :takeoff0-time))
-                             (list (send robot-env :robot :get :rleg-contact-coords)
+                             (list (send robot-env :robot :get :rarm-contact-coords)
+                                   (send robot-env :robot :get :rleg-contact-coords)
                                    (send robot-env :robot :get :lleg-contact-coords)
                                    ))
                             ((< tm (send robot-env :get :landing0-time))
-                             (list (send robot-env :robot :get :rleg-contact-coords)))
+                             (list (send robot-env :robot :get :rarm-contact-coords)
+                                   (send robot-env :robot :get :rleg-contact-coords)))
                             (t
-                             (list (send robot-env :robot :get :rleg-contact-coords)
+                             (list (send robot-env :robot :get :rarm-contact-coords)
+                                   (send robot-env :robot :get :rleg-contact-coords)
                                    (send robot-env :robot :get :lleg-contact-coords))))
                       )
                   :contact-target-coords-list-func
@@ -270,8 +277,8 @@
                         ))
                   ))
   (send *sqp-opt* :optimize
-        :loop-num 10
-        :print-status-interval 5
+        :loop-num 50
+        :print-status-interval 1
         )
 
   (when graph-filename

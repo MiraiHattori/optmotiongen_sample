@@ -1,7 +1,7 @@
 (load "./sample-sqp-optimization-instant.l")
 (load "package://eus_qp/optmotiongen/euslisp/bspline-dynamic-configuration-task.l")
 
-(defun jaxon-run
+(defun jaxon-three-step
     (&key
      ;; time
      (start-time 0.0)
@@ -30,9 +30,9 @@
      (optimize-torque? nil)
      (avoid-collision? nil)
      (graph-filename
-      (ros::resolve-ros-path "package://eus_qp/optmotiongen/logs/jaxon-run/graph.pdf"))
+      (ros::resolve-ros-path "package://eus_qp/optmotiongen/logs/jaxon-three-step/graph.pdf"))
      (output-filename
-      (ros::resolve-ros-path "package://eus_qp/optmotiongen/logs/jaxon-run/tmp"))
+      (ros::resolve-ros-path "package://eus_qp/optmotiongen/logs/jaxon-three-step/tmp"))
      (pre-process-func)
      (visualize-callback-func)
      (visualize-loop? t)
@@ -360,4 +360,4 @@
         :visualize-callback-func visualize-callback-func
         )
   )
-(warn "(jaxon-run :optimize-torque? t)~%")
+(warn "(jaxon-three-step :optimize-torque? t)~%")

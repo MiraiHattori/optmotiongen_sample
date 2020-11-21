@@ -3,7 +3,7 @@
 (load "package://tennis/euslisp/robot-interface.l")
 
 
-(defun jaxon-run
+(defun jaxon-one-step
     (&key
      ;; time
      (start-time 0.0)
@@ -26,9 +26,9 @@
      (optimize-torque? nil)
      (avoid-collision? nil)
      (graph-filename
-      (ros::resolve-ros-path "package://eus_qp/optmotiongen/logs/jaxon-run/graph.pdf"))
+      (ros::resolve-ros-path "package://eus_qp/optmotiongen/logs/jaxon-one-step/graph.pdf"))
      (output-filename
-      (ros::resolve-ros-path "package://eus_qp/optmotiongen/logs/jaxon-run/tmp"))
+      (ros::resolve-ros-path "package://eus_qp/optmotiongen/logs/jaxon-one-step/tmp"))
      (pre-process-func)
      (visualize-callback-func)
      (visualize-loop? t)
@@ -291,4 +291,4 @@
         :visualize-callback-func visualize-callback-func
         )
   )
-(warn "(jaxon-run :optimize-torque? t)~%")
+(warn "(jaxon-one-step :optimize-torque? t)~%")

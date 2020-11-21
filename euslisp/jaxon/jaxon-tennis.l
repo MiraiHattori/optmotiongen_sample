@@ -277,7 +277,7 @@
                         ))
                   ))
   (send *sqp-opt* :optimize
-        :loop-num 50
+        :loop-num 1
         :print-status-interval 1
         )
 

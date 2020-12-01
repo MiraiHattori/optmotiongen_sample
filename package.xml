@@ -9,4 +9,5 @@
   <buildtool_depend>catkin</buildtool_depend>
   <exec_depend>roseus</exec_depend>
   <exec_depend>eus_qp</exec_depend>
+  <exec_depend>eus_nlopt</exec_depend>
 </package>
